@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <base target="_self">
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ระบบจองคิว Online</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+  <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.4.8/dist/sweetalert2.min.css" />
+</head>
+
+<body>
+  <div class="container-fluid" id="app">
+    <div v-if="page==0">
+      <h1>ระบบจองคิว Online</h1>
+      <hr />
+      <div class="text-center" style=" margin-top: 100px;">
+        <div class="spinner-border text-primary" style="width: 10rem; height: 10rem;" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <h1 class="text-primary">Loading...</h1>
+      </div>
+    </div>
+
+    <div v-if="page==1">
+      <h1>ลงทะเบียนใช้งานระบบจองคิว Online</h1>
+      <hr />
+      <div class="row g-3 mt-3">
+        <div class="col-12 mb-1">
+          <label for="regisName" class="form-label">ชื่อ-สกุล</label>
+          <input type="text" class="form-control" id="regisName" v-model.trim="regisFrm.cname" placeholder="กรอกชื่อ-สกุล">
+        </div>
+        <div class="col-12 mb-1">
+          <label for="regisPhone" class="form-label">โทรศัพท์</label>
+          <input type="tel" class="form-control" id="regisPhone" v-model.trim="regisFrm.cphone" placeholder="กรอกหมายเลขโทรศัพท์">
+        </div>
+        <div class="col">
+          <button type="button" class="btn btn-success form-control" @click="addCustomer()">ลงทะเบียน</button>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="page==2">
+      <h1>ระบบจองคิว Online</h1>
+      <hr />
+      <div class="row g-3 mt-3">
+        <div class="col-12 mb-1">
+          <label for="apFrmDate" class="form-label">วันที่</label>
+          <input type="date" class="form-control" id="apFrmDate" v-model.trim="appointFrm.date" min="<?= tomorrow ?>" placeholder="วันที่">
+        </div>
+
+        <div class="col-12 mb-1">
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="apFrmPeriod" id="apFrmPeriod1" v-model="appointFrm.period" value="เช้า">
+            <label class="form-check-label" for="apFrmPeriod1"> ช่วงเช้า (8.30 น. - 12.00 น.)</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="apFrmPeriod" id="apFrmPeriod2" v-model="appointFrm.period" value="บ่าย">
+            <label class="form-check-label" for="apFrmPeriod2"> ช่วงบ่าย (13.00 น. - 16.30 น.)</label>
+          </div>
+        </div>
+
+        <div class="col-12 mb-1">
+          <label for="apFrmNote" class="form-label">หมายเหตุ</label>
+          <textarea class="form-control" id="apFrmNote" style="height: 5em;" v-model.trim="appointFrm.note"></textarea>
+        </div>
+
+        <div class="col-12">
+          <button type="button" class="btn btn-success form-control" @click="appAppoint()">บันทึกข้อมูลการจองคิว</button>
+          <button v-if="appoint.no > 0" type="button" class="btn btn-link form-control" @click="swapPage()">ข้อมูลการจองคิว</button>
+          <button v-else type="button" class="btn btn-link form-control" disabled>ข้อมูลการจองคิว</button>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="page==3">
+      <h1>ข้อมูลการจองคิว Online</h1>
+      <hr />
+      <div class="row g-3 mt-3">
+        <div class="col-12 mb-1">
+          <label for="apDate" class="form-label">วันที่</label>
+          <input type="date" class="form-control" id="apDate" v-model="appoint.date" readonly >
+        </div>
+
+        <div class="col-12 mb-1">
+          <label for="apPeriod" class="form-label">ช่วง</label>
+          <input v-if="appoint.period == 'เช้า'" type="text" class="form-control" id="apPeriod" value="เช้า (8.30 น. - 12.00 น.)" readonly >
+          <input v-else type="text" class="form-control" id="apPeriod" value="บ่าย (13.00 น. - 16.30 น.)" readonly >
+        </div>
+
+        <div class="col-12 mb-1">
+          <label for="apNote" class="form-label">หมายเหตุ</label>
+          <textarea class="form-control" id="apNote" style="height: 5em;" v-model.trim="appoint.note" readonly></textarea>
+        </div>
+
+        <div class="col-12 mb-1 text-end">
+          <button type="button" class="btn btn-danger" @click="cnlAppoint()">ยกเลิกรายการจอง</button>&nbsp;
+          <button type="button" class="btn btn-secondary" @click="swapPage()">ปิด</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous">
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.4.8/dist/sweetalert2.all.min.js"></script>
+  <script src="https://unpkg.com/vue@3"></script>
+  <script>
+    Vue.createApp({
+    data() {
+      return {
+        userId:'<?= userId ?>',
+        displayName:'<?= displayName ?>',
+        pictureUrl:'<?= pictureUrl ?>',
+        customer:{cid: null, cname: null, cphone: null, isCustomer: false},
+        appoint:{no: 0, date:null, period: null, note: null, cid: null},
+        page:0,
+        regisFrm:{cname:'<?= displayName ?>', cphone:null},
+        appointFrm:{date:'<?= tomorrow ?>', period:'เช้า', note:null}
+      }
+    },
+    methods:{
+      initfn(){
+        google.script.run.withSuccessHandler(data =>{
+          this.page = data.isCustomer? 2:1;
+          this.customer = data;
+        }).getCustomer(this.userId);
+        google.script.run.withSuccessHandler(data =>{
+          this.appoint = data;
+        }).getAppoint(this.userId);
+      },
+      addCustomer(){
+        if(this.regisFrm.cname == null || this.regisFrm.cname == ''){
+          Swal.fire('กรอกข้อมูลไม่ถูกต้อง', 'กรุณากรอกชื่อ-สุกล', 'error')
+          .then(result => {document.getElementById("regisName").focus();});
+        }else if(this.regisFrm.cphone == null || this.regisFrm.cphone == ''){
+          Swal.fire('กรอกข้อมูลไม่ถูกต้อง', 'กรุณากรอกหมายเลขโทรศัพท์', 'error')
+          .then(result => {document.getElementById("regisPhone").focus();});
+        }else{
+          google.script.run.withSuccessHandler(data =>{
+            if(data.isCustomer){
+              Swal.fire('เสร็จสิ้น', 'ลงทะเบียนใช้งานระบบเสร็จสิ้น', 'success')
+              .then(result => {
+                this.customer = data;
+                this.page = 2;
+              });
+            }else{
+              Swal.fire('ผิดพลาด', 'ลงทะเบียนใช้งานระบบผิดพลาด', 'error');
+            }
+          }).addCustomer(this.userId, this.regisFrm.cname, this.regisFrm.cphone);
+        }
+      },
+      appAppoint(){
+        if(this.appoint.no > 0){
+          Swal.fire('ท่านได้ทำการจองคิวแล้ว', 'สามารถทำการจองคิวได้ 1 รายการเท่านั้น ท่านสามารถยกการจองคิวก่อนหน้าได้หากท่านต้องการจองคิวใหม่', 'warning');
+        }else if(this.appointFrm.date == null || this.appointFrm.date == ''){
+          Swal.fire('กรอกข้อมูลไม่ถูกต้อง', 'กรุณากรอกวันที่ทำการจองคิว', 'error')
+          .then(result => {document.getElementById("apFrmDate").focus();});
+        }else{
+          google.script.run.withSuccessHandler(data =>{
+            if(data.no > 0){
+              Swal.fire('เสร็จสิ้น', 'ลงทะเบียนใช้งานระบบเสร็จสิ้น', 'success')
+              .then(result => {
+                this.appoint = data;
+                this.appointFrm = {date:'<?= tomorrow ?>', period:'เช้า', note:null};
+                });
+            }else{
+              Swal.fire('ผิดพลาด', 'ลงทะเบียนใช้งานระบบผิดพลาด', 'error');
+            }
+          }).addAppoint(this.appointFrm.date, this.appointFrm.period, this.appointFrm.note, this.userId, this.pictureUrl);
+        }
+      },
+      cnlAppoint(){
+        Swal.fire({
+          icon: 'question',
+          title: 'ท่านต้องการยกเลิกการจองคิวหรือไม่?',
+          showConfirmButton: false,
+          showDenyButton: true,
+          showCancelButton: true,
+          denyButtonText: `Confirm`,
+        }).then(result => {
+          if (result.isDenied) {
+            google.script.run.withSuccessHandler(data =>{
+              if(data.no == 0){
+                Swal.fire('เสร็จสิ้น', 'ดำเนิการเสร็จสิ้น', 'success')
+                .then(result => {
+                  this.appoint = data;
+                  this.page = 2;
+                });
+              }else{
+                Swal.fire('ผิดพลาด', 'ดำเนิการผิดพลาด', 'error');
+              }
+            }).changeStatus(this.userId, this.appoint.no, "ยกเลิก");
+          }
+        });
+      },
+      swapPage(){
+        this.page = this.page==2?3:2;
+      },
+
+    },
+    mounted(){
+      this.initfn();
+    }
+  }).mount('#app')
+  </script>
+</body>
+
+</html>
